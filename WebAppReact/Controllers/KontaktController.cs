@@ -27,7 +27,6 @@ namespace WebAppReact.Controllers
             return Ok(list);
         }
 
-        [Authorize]
         [HttpDelete]
         [Route("DeleteContact/{id}")]
         public IActionResult DeleteContact(int id)

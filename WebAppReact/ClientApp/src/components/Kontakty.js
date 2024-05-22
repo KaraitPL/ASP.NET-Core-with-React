@@ -1,16 +1,14 @@
 ﻿import React, { useState, useEffect } from 'react';
-import authService from './api-authorization/AuthorizeService';
 
 const Kontakty = () => {
     const [items, setItems] = useState([]);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchContacts();
     }, []);
 
     const fetchContacts = () => {
-        fetch('api/kontakt/GetContacts')      
+        fetch('api/kontakt/GetContacts')
             .then((response) => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -19,16 +17,13 @@ const Kontakty = () => {
             })
             .then((data) => {
                 setItems(data);
-                setLoading(false);
             })
             .catch((error) => console.error('Error fetching data:', error));
     };
 
-    const handleDeleteContact = async (id) => {
-        const token = authService.getAccessToken();
+    const handleDeleteContact = (id) => {
         fetch(`api/kontakt/DeleteContact/${id}`, {
             method: 'DELETE',
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         })
             .then((response) => {
                 if (!response.ok) {
@@ -43,9 +38,7 @@ const Kontakty = () => {
     return (
         <main>
             <h3>Lista Kontaktów</h3>
-            {loading ? (
-                <div>Loading...</div>
-            ) : (
+            {items.length > 0 ? (
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                         <tr>
@@ -68,6 +61,8 @@ const Kontakty = () => {
                         ))}
                     </tbody>
                 </table>
+            ) : (
+                <div>Loading...</div>
             )}
         </main>
     );
