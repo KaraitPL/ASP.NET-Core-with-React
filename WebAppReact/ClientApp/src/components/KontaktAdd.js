@@ -10,48 +10,61 @@ const KontaktAdd = ({ handleAddContact }) => {
     const [kategoria, setKategoria] = useState('');
     const [podkategoria, setPodkategoria] = useState('');
     const [dataUrodzenia, setDataUrodzenia] = useState('');
+
     const [kategorie, setKategorie] = useState([]);
     const [podkategorie, setPodkategorie] = useState([]);
+
+    const [emailError, setEmailError] = useState('');
+
+    const [passwordError, setPasswordError] = useState('');
+
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Pobierz kategorie z bazy danych lub z innego źródła danych
         fetchCategories();
         fetchSubcategories();
     }, []);
 
+    // Funkcja do pobierania kategorii z serwera
     const fetchCategories = async () => {
         try {
-            // Przykładowe pobranie kategorii z API
             const response = await fetch('/api/kategoria/GetCategories');
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
             const data = await response.json();
-            setKategorie(data); // Ustaw listę kategorii
+            setKategorie(data);
         } catch (error) {
             console.error('Błąd podczas pobierania kategorii:', error);
         }
     };
 
+    // Funkcja do pobierania podkategorii z serwera
     const fetchSubcategories = async () => {
         try {
-            // Przykładowe pobranie kategorii z API
             const response = await fetch('/api/podkategoria/GetSubcategories');
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
             const data = await response.json();
-            setPodkategorie(data); // Ustaw listę kategorii
+            setPodkategorie(data);
         } catch (error) {
             console.error('Błąd podczas pobierania podkategorii:', error);
         }
     };
 
+    // Funkcja obsługująca wysłanie formularza
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const PL = {
+            // Walidacja hasła
+            const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+            if (!passwordRegex.test(haslo)) {
+                throw new Error('Hasło musi zawierać co najmniej 8 znaków, jedną dużą literę, jedną cyfrę i jeden znak specjalny.');
+            }
+
+            // Dane kontaktu
+            const contactData = {
                 imie: imie,
                 nazwisko: nazwisko,
                 email: email,
@@ -62,23 +75,25 @@ const KontaktAdd = ({ handleAddContact }) => {
                 dataUrodzenia: dataUrodzenia
             };
 
+            // Wysłanie danych do serwera
             const response = await fetch('/api/kontakt/AddContact', {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(PL)
+                body: JSON.stringify(contactData)
             });
 
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
 
+            // Pomyślne dodanie kontaktu - przejście do strony głównej i przekazanie danych kontaktu
             const responseData = await response.json();
             navigate(`/`);
-            // Jeśli dodanie kontaktu było udane, wywołaj funkcję handleAddContact
-            handleAddContact(responseData); // Załóżmy, że serwer zwraca zaktualizowany kontakt
-            // Wyczyść formularz po dodaniu kontaktu
+            handleAddContact(responseData);
+
+            // Wyczyszczenie pól formularza po dodaniu kontaktu
             setImie('');
             setNazwisko('');
             setEmail('');
@@ -89,9 +104,16 @@ const KontaktAdd = ({ handleAddContact }) => {
             setDataUrodzenia('');
         } catch (error) {
             console.error('Błąd podczas dodawania kontaktu:', error);
+            // Obsługa błędów podczas dodawania kontaktu
+            if (error.message.includes('Hasło')) {
+                setPasswordError(error.message); // Ustawienie komunikatu o błędzie hasła
+            } else {
+                setEmailError('Adres e-mail jest już zajęty.');
+            }
         }
     };
 
+    // Renderowanie formularza
     return (
         <div style={{ maxWidth: '400px' }}>
             <h3 style={{ marginBottom: '20px' }}>Dodaj nowy kontakt</h3>
@@ -119,9 +141,13 @@ const KontaktAdd = ({ handleAddContact }) => {
                     <input
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                            setEmail(e.target.value);
+                            setEmailError('');
+                        }}
                         required
                     />
+                    {emailError && <p style={{ color: 'red' }}>{emailError}</p>}
                 </div>
                 <div>
                     <label style={{ display: 'block' }}>Hasło:</label>
@@ -131,6 +157,7 @@ const KontaktAdd = ({ handleAddContact }) => {
                         onChange={(e) => setHaslo(e.target.value)}
                         required
                     />
+                    {passwordError && <p style={{ color: 'red' }}>{passwordError}</p>} {/* Wyświetlanie komunikatu o błędzie hasła */}
                 </div>
                 <div>
                     <label style={{ display: 'block' }}>Kategoria:</label>
@@ -158,7 +185,7 @@ const KontaktAdd = ({ handleAddContact }) => {
                 )}
                 {kategoria === "Sluzbowy" && (
                     <div>
-                    <label style={{ display: 'block' }}>Podkategoria:</label>
+                        <label style={{ display: 'block' }}>Podkategoria:</label>
                         <select
                             value={podkategoria}
                             onChange={(e) => setPodkategoria(e.target.value)}

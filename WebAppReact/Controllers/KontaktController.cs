@@ -21,10 +21,12 @@ namespace WebAppReact.Controllers
             _context = context;
         }
 
+        // Metoda HTTP GET do pobierania skróconych informacji o kontaktach
         [HttpGet]
         [Route("GetContacts")]
         public IActionResult GetConstacts()
         {
+            // Pobierz skrócone informacje o kontaktach
             var contactShortInfo = _context.Kontakty
                 .Select(k => new
                 {
@@ -37,6 +39,7 @@ namespace WebAppReact.Controllers
             return Ok(contactShortInfo);
         }
 
+        // Metoda HTTP DELETE do usuwania kontaktu
         [HttpDelete]
         [Route("DeleteContact/{id}")]
         public IActionResult DeleteContact(int id)
@@ -54,6 +57,7 @@ namespace WebAppReact.Controllers
             return NoContent();
         }
 
+        // Metoda HTTP GET do pobierania szczegółowych informacji o kontakcie
         [HttpGet]
         [Route("GetContact/{id}")]
         public IActionResult GetContact(int id)
@@ -66,6 +70,7 @@ namespace WebAppReact.Controllers
             return Ok(kontakt);
         }
 
+        // Metoda HTTP POST do dodawania nowego kontaktu
         [HttpPost]
         [Route("AddContact")]
         public async Task<IActionResult> AddContact([FromBody] Kontakt kontakt)
@@ -74,10 +79,18 @@ namespace WebAppReact.Controllers
             {
                 try
                 {
-                    _context.Kontakty.Add(kontakt);
-                    await _context.SaveChangesAsync();
+                    if (IsEmailUnique(kontakt.Email)) // Sprawdź, czy adres e-mail jest unikalny
+                    {
+                        _context.Kontakty.Add(kontakt);
+                        await _context.SaveChangesAsync();
 
-                    return CreatedAtAction(nameof(GetContact), new { id = kontakt.Id }, kontakt);
+                        return CreatedAtAction(nameof(GetContact), new { id = kontakt.Id }, kontakt);
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("email", "Adres e-mail jest już zajęty.");
+                        return BadRequest(ModelState);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -90,16 +103,24 @@ namespace WebAppReact.Controllers
             }
         }
 
+        // Metoda HTTP PUT do edycji istniejącego kontaktu
         [HttpPut("EditContact/{id}")]
         public IActionResult EditContact(int id, [FromBody] Kontakt updatedContact)
         {
+            // Znajdź kontakt o podanym identyfikatorze
             var kontakt = _context.Kontakty.FirstOrDefault(k => k.Id == id);
             if (kontakt == null)
             {
-                return NotFound();
+                return NotFound(); 
             }
 
-            // Zaktualizuj dane kontaktu na podstawie przekazanych danych
+            // Sprawdź, czy nowy adres e-mail jest unikalny
+            if (!IsEmailUnique(updatedContact.Email) && updatedContact.Email != kontakt.Email)
+            {
+                ModelState.AddModelError("email", "Adres e-mail jest już zajęty.");
+                return BadRequest(ModelState);
+            }
+
             kontakt.Imie = updatedContact.Imie;
             kontakt.Nazwisko = updatedContact.Nazwisko;
             kontakt.Email = updatedContact.Email;
@@ -109,10 +130,20 @@ namespace WebAppReact.Controllers
             kontakt.Podkategoria = updatedContact.Podkategoria;
             kontakt.DataUrodzenia = updatedContact.DataUrodzenia;
 
-            // Zapisz zmiany w bazie danych
             _context.SaveChanges();
 
             return Ok(kontakt);
         }
+
+        // Metoda sprawdzająca unikalność adresu e-mail
+        private bool IsEmailUnique(string email)
+        {
+            if (!_context.Kontakty.Any())
+            {
+                return true;
+            }
+            return !_context.Kontakty.Any(x => x.Email == email); // Sprawdź, czy adres e-mail jest unikalny
+        }
+
     }
 }
