@@ -102,11 +102,11 @@ const Kontakty = () => {
                             ))}
                         </tbody>
                     </table>
-                    <Link to="/dodaj-kontakt">Dodaj nowy kontakt</Link> {/* Link do formularza dodawania nowego kontaktu */}
                 </div>
             ) : (
                 <div>Loading...</div> // Komunikat ładowania, jeśli lista kontaktów jest pusta lub nie została jeszcze pobrana
             )}
+            <div><Link to="/dodaj-kontakt">Dodaj nowy kontakt</Link> {/* Link do formularza dodawania nowego kontaktu */}</div>
         </main>
     );
 };
