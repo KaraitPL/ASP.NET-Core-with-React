@@ -1,26 +1,22 @@
 import ApiAuthorzationRoutes from './components/api-authorization/ApiAuthorizationRoutes';
-import { Counter } from "./components/Counter";
-import { FetchData } from "./components/FetchData";
-import { Home } from "./components/Home";
 import Kontakty from './components/Kontakty';
+import KontaktDetails from './components/KontaktDetails';
+import KontaktAdd from './components/KontaktAdd';
 
 const AppRoutes = [
   {
     index: true,
-    element: <Home />
+    element: <Kontakty />
   },
-  {
-    path: '/counter',
-    element: <Counter />
-  },
-  {
-    path: '/fetch-data',
-    //requireAuth: true,
-    element: <FetchData />
+    {
+        path: '/kontakt/:id',
+        element: <KontaktDetails />,
+        requireAuth: false
     },
     {
-        path: '/kontakty',
-        element: <Kontakty />
+        path: '/dodaj-kontakt',
+        element: <KontaktAdd />,
+        requireAuth: false
     },
 
   ...ApiAuthorzationRoutes

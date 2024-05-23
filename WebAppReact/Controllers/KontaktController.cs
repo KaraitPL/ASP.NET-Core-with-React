@@ -23,8 +23,16 @@ namespace WebAppReact.Controllers
         [Route("GetContacts")]
         public IActionResult GetConstacts()
         {
-            List<Kontakt> list = _context.Kontakty.ToList();
-            return Ok(list);
+            var contactShortInfo = _context.Kontakty
+                .Select(k => new
+                {
+                    k.Id,
+                    k.Imie,
+                    k.Nazwisko,
+                    k.Email
+                })
+                .ToList();
+            return Ok(contactShortInfo);
         }
 
         [HttpDelete]
@@ -42,6 +50,42 @@ namespace WebAppReact.Controllers
             _context.SaveChanges();
 
             return NoContent();
+        }
+
+        [HttpGet]
+        [Route("GetContact/{id}")]
+        public IActionResult GetContact(int id)
+        {
+            var kontakt = _context.Kontakty.FirstOrDefault(k => k.Id == id);
+            if (kontakt == null)
+            {
+                return NotFound();
+            }
+            return Ok(kontakt);
+        }
+
+        [HttpPost]
+        [Route("AddContact")]
+        public async Task<IActionResult> AddContact([FromBody] Kontakt kontakt)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Kontakty.Add(kontakt);
+                    await _context.SaveChangesAsync();
+
+                    return CreatedAtAction(nameof(GetContact), new { id = kontakt.Id }, kontakt);
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(500, $"Internal server error: {ex.Message}");
+                }
+            }
+            else
+            {
+                return BadRequest(ModelState);
+            }
         }
     }
 }
