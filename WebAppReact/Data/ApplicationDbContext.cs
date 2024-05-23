@@ -15,5 +15,7 @@ namespace WebAppReact.Data
         }
 
         public DbSet<Kontakt> Kontakty { get; set; }
+        public DbSet<Kategoria> Kategorie { get; set; }
+        public DbSet<Podkategoria> Podkategorie { get; set; }
     }
 }

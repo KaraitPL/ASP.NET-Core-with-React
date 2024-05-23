@@ -1,14 +1,23 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import authService from './api-authorization/AuthorizeService';
 
 const Kontakty = () => {
     const [items, setItems] = useState([]);
     const navigate = useNavigate();
+    const [loggedIn, setLoggedIn] = useState(false);
 
     useEffect(() => {
         fetchContacts();
+        checkLoginStatus();
     }, []);
+
+    const checkLoginStatus = async () => {
+        const user = await authService.getUser();
+
+        setLoggedIn(!!user);
+    };
 
     const fetchContacts = () => {
         fetch('/api/kontakt/GetContacts')
@@ -25,21 +34,38 @@ const Kontakty = () => {
     };
 
     const handleDeleteContact = (id) => {
-        fetch(`/api/kontakt/DeleteContact/${id}`, {
-            method: 'DELETE',
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                // Usuń kontakt z listy po usunięciu z bazy danych
-                setItems(items.filter((item) => item.id !== id));
+        if (loggedIn) {
+            fetch(`/api/kontakt/DeleteContact/${id}`, {
+                method: 'DELETE',
             })
-            .catch((error) => console.error('Error deleting contact:', error));
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    // Usuń kontakt z listy po usunięciu z bazy danych
+                    setItems(items.filter((item) => item.id !== id));
+                })
+                .catch((error) => console.error('Error deleting contact:', error));
+        } else {
+            navigate(`/authentication/login`);
+        }
+        
     };
 
-    const handleDetailContact = (id) => {
-        navigate(`/kontakt/${id}`);
+    const handleEditContact = (id) => {
+        if (loggedIn) {
+            navigate(`/kontakt/edit/${id}`);
+        } else {
+            navigate(`/authentication/login`);
+        }
+    };
+
+    const handleDetailContact = (id) => {    
+        if (loggedIn) {
+            navigate(`/kontakt/${id}`);
+        } else {
+            navigate(`/authentication/login`);
+        }
     };
 
 
@@ -66,6 +92,7 @@ const Kontakty = () => {
                                     <td style={{ border: '1px solid black', padding: '8px' }}>
                                         <button onClick={() => handleDeleteContact(item.id)}>Usuń</button>
                                         <button onClick={() => handleDetailContact(item.id)}>Szczegóły</button>
+                                        <button onClick={() => handleEditContact(item.id)}>Edytuj</button>
                                     </td>
                                 </tr>
                             ))}

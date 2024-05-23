@@ -13,7 +13,12 @@ const context =  [
   "/ApplyDatabaseMigrations",
   "/_framework",
   "/api/kontakt",
+  "/api/kontakt/edit",
   "/api/dodaj-kontakt",
+  "/api/kategoria",
+  "/api/podkategoria",
+
+
 
 ];
 

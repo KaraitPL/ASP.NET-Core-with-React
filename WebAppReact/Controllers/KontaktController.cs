@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using WebAppReact.Data.Migrations;
+using Kontakt = WebAppReact.Models.Kontakt;
 
 namespace WebAppReact.Controllers
 {
@@ -86,6 +88,31 @@ namespace WebAppReact.Controllers
             {
                 return BadRequest(ModelState);
             }
+        }
+
+        [HttpPut("EditContact/{id}")]
+        public IActionResult EditContact(int id, [FromBody] Kontakt updatedContact)
+        {
+            var kontakt = _context.Kontakty.FirstOrDefault(k => k.Id == id);
+            if (kontakt == null)
+            {
+                return NotFound();
+            }
+
+            // Zaktualizuj dane kontaktu na podstawie przekazanych danych
+            kontakt.Imie = updatedContact.Imie;
+            kontakt.Nazwisko = updatedContact.Nazwisko;
+            kontakt.Email = updatedContact.Email;
+            kontakt.Haslo = updatedContact.Haslo;
+            kontakt.Telefon = updatedContact.Telefon;
+            kontakt.Kategoria = updatedContact.Kategoria;
+            kontakt.Podkategoria = updatedContact.Podkategoria;
+            kontakt.DataUrodzenia = updatedContact.DataUrodzenia;
+
+            // Zapisz zmiany w bazie danych
+            _context.SaveChanges();
+
+            return Ok(kontakt);
         }
     }
 }

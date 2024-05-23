@@ -1,7 +1,17 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
-const KontaktAdd = ({ handleAddContact }) => {
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Dodaj 1, ponieważ miesiące są zerowane
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const KontaktEdit = ({ handleEditContact }) => {
+    const { id } = useParams();
+    const [contact, setContact] = useState(null);
     const [imie, setImie] = useState('');
     const [nazwisko, setNazwisko] = useState('');
     const [email, setEmail] = useState('');
@@ -15,20 +25,40 @@ const KontaktAdd = ({ handleAddContact }) => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Pobierz kategorie z bazy danych lub z innego źródła danych
         fetchCategories();
         fetchSubcategories();
-    }, []);
+        fetchContactDetails(id);
+    }, [id]);
+
+    const fetchContactDetails = async (id) => {
+        try {
+            const response = await fetch(`/api/kontakt/GetContact/${id}`);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
+            setContact(data);
+            setImie(data.imie);
+            setNazwisko(data.nazwisko);
+            setEmail(data.email);
+            setHaslo(data.haslo);
+            setTelefon(data.telefon);
+            setKategoria(data.kategoria);
+            setPodkategoria(data.podkategoria);
+            setDataUrodzenia((formatDate(data.dataUrodzenia)));
+        } catch (error) {
+            console.error('Error fetching contact details:', error);
+        }
+    };
 
     const fetchCategories = async () => {
         try {
-            // Przykładowe pobranie kategorii z API
             const response = await fetch('/api/kategoria/GetCategories');
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
             const data = await response.json();
-            setKategorie(data); // Ustaw listę kategorii
+            setKategorie(data);
         } catch (error) {
             console.error('Błąd podczas pobierania kategorii:', error);
         }
@@ -36,13 +66,12 @@ const KontaktAdd = ({ handleAddContact }) => {
 
     const fetchSubcategories = async () => {
         try {
-            // Przykładowe pobranie kategorii z API
             const response = await fetch('/api/podkategoria/GetSubcategories');
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
             const data = await response.json();
-            setPodkategorie(data); // Ustaw listę kategorii
+            setPodkategorie(data);
         } catch (error) {
             console.error('Błąd podczas pobierania podkategorii:', error);
         }
@@ -51,7 +80,8 @@ const KontaktAdd = ({ handleAddContact }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const PL = {
+            const updatedContact = {
+                id: contact.id,
                 imie: imie,
                 nazwisko: nazwisko,
                 email: email,
@@ -62,39 +92,32 @@ const KontaktAdd = ({ handleAddContact }) => {
                 dataUrodzenia: dataUrodzenia
             };
 
-            const response = await fetch('/api/kontakt/AddContact', {
-                method: "POST",
+            const response = await fetch(`/api/kontakt/EditContact/${id}`, {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify(PL)
+                body: JSON.stringify(updatedContact)
             });
-
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
 
             const responseData = await response.json();
-            navigate(`/`);
-            // Jeśli dodanie kontaktu było udane, wywołaj funkcję handleAddContact
-            handleAddContact(responseData); // Załóżmy, że serwer zwraca zaktualizowany kontakt
-            // Wyczyść formularz po dodaniu kontaktu
-            setImie('');
-            setNazwisko('');
-            setEmail('');
-            setHaslo('');
-            setKategoria('');
-            setPodkategoria('');
-            setTelefon('');
-            setDataUrodzenia('');
+            handleEditContact(responseData); // Wywołaj funkcję handleEditContact z zaktualizowanymi danymi
         } catch (error) {
-            console.error('Błąd podczas dodawania kontaktu:', error);
+            console.error('Błąd podczas edycji kontaktu:', error);
         }
+        navigate(`/`);
     };
+
+    if (!contact) {
+        return <div>Loading...</div>; // Opcjonalne ładowanie, gdy kontakt nie jest jeszcze załadowany
+    }
 
     return (
         <div style={{ maxWidth: '400px' }}>
-            <h3 style={{ marginBottom: '20px' }}>Dodaj nowy kontakt</h3>
+            <h3 style={{ marginBottom: '20px' }}>Edytuj kontakt</h3>
             <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '10px' }}>
                 <div>
                     <label style={{ display: 'block' }}>Imię:</label>
@@ -158,7 +181,7 @@ const KontaktAdd = ({ handleAddContact }) => {
                 )}
                 {kategoria === "Sluzbowy" && (
                     <div>
-                    <label style={{ display: 'block' }}>Podkategoria:</label>
+                        <label style={{ display: 'block' }}>Podkategoria:</label>
                         <select
                             value={podkategoria}
                             onChange={(e) => setPodkategoria(e.target.value)}
@@ -189,10 +212,10 @@ const KontaktAdd = ({ handleAddContact }) => {
                         required
                     />
                 </div>
-                <button type="submit" style={{ marginTop: '20px' }}>Dodaj kontakt</button>
+                <button type="submit" style={{ marginTop: '20px' }}>Zapisz zmiany</button>
             </form>
         </div>
     );
 };
 
-export default KontaktAdd;
+export default KontaktEdit;
