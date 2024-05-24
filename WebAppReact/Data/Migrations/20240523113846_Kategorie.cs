@@ -8,34 +8,24 @@ namespace WebAppReact.Data.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_Kontakt",
-                table: "Kontakt");
-
-            migrationBuilder.RenameTable(
-                name: "Kontakt",
-                newName: "Kontakty");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_Kontakty",
-                table: "Kontakty",
-                column: "Id");
+            migrationBuilder.CreateTable(
+                name: "Kategorie",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nazwa = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Kategorie", x => x.Id);
+                });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_Kontakty",
-                table: "Kontakty");
-
-            migrationBuilder.RenameTable(
-                name: "Kontakty",
-                newName: "Kontakt");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_Kontakt",
-                table: "Kontakt",
-                column: "Id");
+            migrationBuilder.DropTable(
+                name: "Kategorie");
         }
     }
 }
